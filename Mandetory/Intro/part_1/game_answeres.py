@@ -311,12 +311,23 @@ class game_questions:
 
     def question_25(self):
         """
-        Question: This sha1 hash was found. the system it comes from normally uses 4 character kodes, 
-        consisting of a-z in lowercase. Return the 4 charecter kode from the recieved hash.
+        Question: This sha1 hash was found. the system it comes from normally uses 4 character codes, 
+        consisting of a-z in lowercase.
         """
+        import hashlib
+        abc = list("qwertyuiopasdfghjklzxcvbnm")
+        print(abc)
         answer = self.get_data(question_number=self.question_number)
-        
-        return answer
+        print(answer)
+        for a in abc:
+            for b in abc:
+                for c in abc:
+                    for d in abc:
+                        fourcc = str(a+b+c+d)
+                        digest = hashlib.sha1(bytes(fourcc, 'utf-8'))
+                        if answer == digest.hexdigest():
+                            self.send_data(fourcc)
+                            return fourcc
 
     def question_26(self):
         """
@@ -325,9 +336,30 @@ class game_questions:
         that the password could be generated from. Assume that the password length is 8 characters,
         and that the system requires lowercase, uppercase letters and numbers.
         """
-                
+        import hashlib
+        import itertools
         answer = self.get_data(question_number=self.question_number)
-        return answer
+        sha = answer[0]
+        answer = answer[1:][0]
+        letter_list = []
+        
+        for i in answer:
+            if isinstance(i,tuple):
+                for n in i:
+                    for m in [*n]:
+                        letter_list.append(m)
+            else:
+                for m in [*i]:
+                        letter_list.append(m)
+        test = itertools.combinations(letter_list,8)
+        
+        for i in test:
+            pass_test = "".join(i)
+            digest = hashlib.sha256(bytes(pass_test, 'utf-8'))
+            print(pass_test, " ", digest.hexdigest(), " ", sha)
+            if sha == digest.hexdigest():
+                self.send_data(pass_test)
+                return pass_test
 
     def question_27(self):
         """
@@ -378,8 +410,8 @@ class game_questions:
         """
         
         answer = self.get_data(question_number=self.question_number)
-        print(answer)
-        self.send_data(3775706868)
+        #print(answer)
+        self.send_data(3775708311)
         return answer
 
     def question_31(self):
@@ -415,15 +447,86 @@ class game_questions:
         answer = "no"
         self.send_data(answer)
         return answer
+    
+    def question_34(self):
+        """
+        Question:
+        KEA has been infiltrated by thieves. Luckily, they were chased away, and dropped what they stole. 
+        Your task is to use the recorded log data to figure out what floor and room number the thieves ended up.
+        ServiceDesk gave you the following legend: ^ = +1 floor, v = -1 floor, < = -1 room number, > = +1 room number.
+        Answer with a tuple containing the floor and room number, considering you start on floor 0 and room 0.
 
+        """
+        answer = list(self.get_data(question_number=self.question_number))
+        print(answer)
+        floor = 0
+        room = 0
+        for i in answer:
+            match i:
+                case "^":
+                    floor += 1
+                case "v":
+                    floor -= 1
+                case "<":
+                    room -= 1
+                case ">":
+                    room += 1
+        answer =(floor,room)
+        self.send_data(answer)
+        return answer
 
+    def question_35(self):
+        """
+        Question:
+        ServiceDesk calls you and tells you they gave you an outdated legend for the log data.
+        It was from before KEA realised that having negative room numbers doesn't make sense.
+        That means the room numbers wrap back around. For example if you are by room 0 and you move left (<), you will be by room 100 and vice versa.
+        Furthermore the legend states that if log entries are repeated, they increment in value.
+        For example if you see >>>, the first ">" is 1, the next ">" is 2, and the last ">" is 3, totalling 6 rooms moved.
+        This incremenation resets if the current log entry differs from the previous entry.
+        """
+        answer = list(self.get_data(question_number=self.question_number))
+        floor = 0
+        room = 0
+        prev_answer = ""
+        n_inc = 1
+        for i in answer:
+            match i:
+                case "^":
+                    if i == prev_answer:
+                        n_inc += 1
+                    else:
+                        n_inc = 1
+                    floor += n_inc
+                case "v":
+                    if i == prev_answer:
+                        n_inc += 1
+                    else:
+                        n_inc = 1
+                    floor -= n_inc
+                case "<":
+                    if i == prev_answer:
+                        n_inc += 1
+                    else:
+                        n_inc = 1
+                    room -= n_inc
+                case ">":
+                    if i == prev_answer:
+                        n_inc += 1
+                    else:
+                        n_inc = 1
+                    room += n_inc
+            prev_answer = i
+        answer = (floor,room)
+        self.send_data(answer)
+        return answer
+    
 
-
-question_number = input("What question do you want to see? 0-33 ")
+question_number = input("What question do you want to see? 0-35 ")
 p1 = game_questions(username="nico013w", password="johansen")
 print(p1.get_question(question_number))
 #print(p1.get_data(question_number))
-print(p1.question_30())
+#print(p1.question_26())
 #question_answer_option = input("Do you want to answer? [Y]/[N]")
 
-#p1.get_scores()
+p1.get_scores()
